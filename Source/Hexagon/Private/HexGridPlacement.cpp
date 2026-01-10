@@ -45,7 +45,7 @@ void AHexGridPlacement::GenerateBoardTiles(const FVector& Center, const FVector&
 
 	// Determine grid parity
 	const bool bShouldNotSubtract = static_cast<int>((GridTileCount.X + 1) / 2) % 2 == 0;
-	const auto& TileTypes = BoardConfig->GetShuffledTileTypes();
+	const auto& TileTypes = BoardConfig->GetShuffledTileTypes(0);
 	int32 TileTypeIndex = 0;
 
 	for(int32 x = 0; x < GridTileCount.X; x++)

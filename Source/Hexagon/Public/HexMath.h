@@ -8,9 +8,12 @@
 #include "HexMath.generated.h"
 
 class UHexBoardConfig;
+
 constexpr float Point3 = 2.f;
 constexpr float Point6 = 4.f;
 constexpr float One6 = 1.f / 6.f;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FValidHexRow, int32, Row);
 
 /**
  *
@@ -53,5 +56,4 @@ public:
 	static void SpawnVerticesAndEdges(UWorld* World, AHexTiles* ParentTile, const FIntPoint& TileIndex, const FVector& GridBottomLeft, const FVector& TileSize, const FVector& SettlementScale, TMap<FIntPoint, AHexTiles*>& OutSettlements, TMap<FIntPoint, AHexTiles*>& OutRoads, const UHexBoardConfig* Config);
 
 	static void ForEachValidHexRow(int32 Column, FIntPoint GridSize, const TFunctionRef<void(int32 Row)>& Func);
-
 };

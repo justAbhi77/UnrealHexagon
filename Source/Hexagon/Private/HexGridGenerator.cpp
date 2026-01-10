@@ -7,11 +7,14 @@
 #include "HexTiles.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Net/UnrealNetwork.h"
 
 
 AHexGridGenerator::AHexGridGenerator()
 {
 	PrimaryActorTick.bCanEverTick = true;
+
+	SetReplicates(true);
 }
 
 void AHexGridGenerator::BeginPlay()
@@ -21,7 +24,12 @@ void AHexGridGenerator::BeginPlay()
 	PlayerController = UGameplayStatics::GetPlayerController(this, 0);
 
 	InitializeGrid();
-	GenerateBoardTiles();
+
+	// Server Generates the seed for the game
+	if(!HasAuthority()) return;
+
+	GridGenSeed = FMath::Rand32();
+	GenerateBoardTiles(GridGenSeed);
 }
 
 void AHexGridGenerator::Tick(const float DeltaTime)
@@ -40,6 +48,13 @@ void AHexGridGenerator::Tick(const float DeltaTime)
 	UpdateHoveredTile(Intersection);
 }
 
+void AHexGridGenerator::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ThisClass, GridGenSeed);
+}
+
 void AHexGridGenerator::InitializeGrid()
 {
 	const FVector& TileSize = BoardConfig->GridTileSize;
@@ -51,7 +66,12 @@ void AHexGridGenerator::InitializeGrid()
 	GridBottomLeftLocation = UHexMath::CalculateGridBottomLeft(GridCenterLocation, BoardConfig->GetGridTileCount(), TileSize);
 }
 
-void AHexGridGenerator::GenerateBoardTiles()
+void AHexGridGenerator::OnRep_GridGenSeed()
+{
+	GenerateBoardTiles(GridGenSeed);
+}
+
+void AHexGridGenerator::GenerateBoardTiles(const int32 Seed)
 {
 	const FIntPoint GridSize = BoardConfig->GetGridTileCount().IntPoint();
 	const FVector& TileSize = BoardConfig->GridTileSize;
@@ -59,7 +79,7 @@ void AHexGridGenerator::GenerateBoardTiles()
 	const FVector TileScale = BoardConfig->TileMeshSize / TileSize;
 	const FVector SettlementScale = BoardConfig->SettlementMeshSize / TileSize;
 
-	const TArray<EHexTileType>& TileTypes = BoardConfig->GetShuffledTileTypes();
+	const TArray<EHexTileType>& TileTypes = BoardConfig->GetShuffledTileTypes(Seed);
 	int32 TileTypeIndex = 0;
 
 	for(int32 X = 0; X < GridSize.X; ++X)

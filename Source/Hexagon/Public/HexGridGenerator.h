@@ -19,6 +19,7 @@ public:
 
 	virtual void Tick(const float DeltaTime) override;
 
+	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 protected:
 	virtual void BeginPlay() override;
 
@@ -31,6 +32,9 @@ private:
 	TObjectPtr<APlayerController> PlayerController;
 
 	/* ===== Grid Cache ===== */
+	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_GridGenSeed, Category="Hex Grid")
+	int32 GridGenSeed;
+
 	UPROPERTY(VisibleAnywhere, Category="Hex Grid")
 	FVector GridCenterLocation;
 
@@ -59,7 +63,11 @@ private:
 
 	/* ===== Generation ===== */
 	void InitializeGrid();
-	void GenerateBoardTiles();
+
+	UFUNCTION()
+	void OnRep_GridGenSeed();
+
+	void GenerateBoardTiles(const int32 Seed);
 
 	/* ===== Mouse ===== */
 	bool TraceMouseToGrid(FVector& OutIntersection) const;

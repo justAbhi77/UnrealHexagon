@@ -71,5 +71,19 @@ public:
 		return FVector2D(TileSize, TileSize);
 	}
 
-	TArray<EHexTileType> GetShuffledTileTypes() const;
+	TArray<EHexTileType> GetShuffledTileTypes(const int32 Seed) const;
 };
+
+
+template <class T>
+void ShuffleArray(T& InArray, const int32 Seed)
+{
+	const FRandomStream Stream{Seed};
+	const int32 LastIndex = InArray.Num() - 1;
+	for (int32 i = 0; i < LastIndex; ++i)
+	{
+		const int32 Index = Stream.RandRange(0, LastIndex);
+		if (i != Index)
+			InArray.Swap(i, Index);
+	}
+}

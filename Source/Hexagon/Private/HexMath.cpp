@@ -175,6 +175,8 @@ void UHexMath::SpawnVerticesAndEdges(UWorld* World, AHexTiles* ParentTile, const
 			Settlement = World->SpawnActorDeferred<AHexTiles>(Config->SettlementTileClass, Transform, nullptr, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn, ESpawnActorScaleMethod::OverrideRootScale);
 
 			Settlement->TileCoordinates = Vertex;
+			Settlement->TileType = EHexTileType::Settlement;
+
 			UGameplayStatics::FinishSpawningActor(Settlement, Transform, ESpawnActorScaleMethod::OverrideRootScale);
 
 			Settlement->AttachToActor(ParentTile, FAttachmentTransformRules::KeepWorldTransform);
@@ -201,6 +203,7 @@ void UHexMath::SpawnVerticesAndEdges(UWorld* World, AHexTiles* ParentTile, const
 		Road = World->SpawnActorDeferred<AHexTiles>(Config->RoadTileClass, RoadTransform, nullptr, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn, ESpawnActorScaleMethod::OverrideRootScale);
 
 		Road->TileCoordinates = MidPoint;
+		Road->TileType = EHexTileType::Road;
 
 		UGameplayStatics::FinishSpawningActor(Road, RoadTransform, ESpawnActorScaleMethod::OverrideRootScale);
 	}

@@ -25,6 +25,8 @@ enum EHexTileType : uint8
 	Farm,
 	Grassland,
 	Water,
+	Settlement,
+	Road
 };
 
 USTRUCT(BlueprintType)

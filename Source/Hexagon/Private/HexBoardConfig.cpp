@@ -2,9 +2,8 @@
 
 
 #include "HexBoardConfig.h"
-#include "Algo/RandomShuffle.h"
 
-TArray<EHexTileType> UHexBoardConfig::GetShuffledTileTypes() const
+TArray<EHexTileType> UHexBoardConfig::GetShuffledTileTypes(const int32 Seed) const
 {
 	TArray<EHexTileType> TileTypes;
 	for(const auto& Pair : TileTypeDistribution)
@@ -15,7 +14,6 @@ TArray<EHexTileType> UHexBoardConfig::GetShuffledTileTypes() const
 		}
 	}
 
-	Algo::RandomShuffle(TileTypes);
-
+	ShuffleArray(TileTypes, Seed);
 	return TileTypes;
 }
