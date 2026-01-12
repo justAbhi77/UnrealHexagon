@@ -3,7 +3,7 @@
 
 #include "HexBoardConfig.h"
 
-TArray<EHexTileType> UHexBoardConfig::GetShuffledTileTypes(const int32 Seed) const
+FShuffledTiles UHexBoardConfig::GetShuffledTiles(const int32 Seed) const
 {
 	TArray<EHexTileType> TileTypes;
 	for(const auto& Pair : TileTypeDistribution)
@@ -14,6 +14,40 @@ TArray<EHexTileType> UHexBoardConfig::GetShuffledTileTypes(const int32 Seed) con
 		}
 	}
 
+	// Standard Catan dice number distribution (excluding desert)
+	TArray<int32> DiceNumbers = {
+		2,
+		3, 3,
+		4, 4,
+		5, 5,
+		6, 6,
+		8, 8,
+		9, 9,
+		10, 10,
+		11, 11,
+		12
+	};
+
 	ShuffleArray(TileTypes, Seed);
-	return TileTypes;
+	ShuffleArray(DiceNumbers, Seed + 1);
+
+	FShuffledTiles ShuffledTiles;
+	ShuffledTiles.ShuffledTileTypes = TileTypes;
+
+	ShuffledTiles.ShuffledDiceNumbers.Reserve(TileTypes.Num());
+
+	int32 DiceIndex = 0;
+
+	for (const EHexTileType TileType : TileTypes)
+	{
+		if (TileType == Desert)
+			ShuffledTiles.ShuffledDiceNumbers.Add(-1); // 0 = no dice
+		else
+		{
+			ShuffledTiles.ShuffledDiceNumbers.Add(DiceNumbers[DiceIndex]);
+			++DiceIndex;
+		}
+	}
+
+	return ShuffledTiles;
 }

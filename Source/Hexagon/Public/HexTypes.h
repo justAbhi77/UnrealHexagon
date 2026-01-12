@@ -54,3 +54,18 @@ struct FHexMouseOverInfo
 
 	FVector2D Index = FVector2D(-1, -1);
 };
+
+UENUM()
+enum class EHexTurnPhase : uint8
+{
+	Setup,
+	Main,
+};
+
+UENUM()
+enum class EHexSetupRound : uint8
+{
+	First,
+	Second,
+	Done
+};

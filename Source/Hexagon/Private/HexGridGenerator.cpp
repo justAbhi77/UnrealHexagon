@@ -14,7 +14,7 @@ AHexGridGenerator::AHexGridGenerator()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
-	SetReplicates(true);
+	bReplicates = true;
 }
 
 void AHexGridGenerator::BeginPlay()
@@ -25,11 +25,13 @@ void AHexGridGenerator::BeginPlay()
 
 	InitializeGrid();
 
+	EnableInput(PlayerController);
+
 	// Server Generates the seed for the game
 	if(!HasAuthority()) return;
 
 	GridGenSeed = FMath::Rand32();
-	GenerateBoardTiles(GridGenSeed);
+	StartGenerateBoard(GridGenSeed);
 }
 
 void AHexGridGenerator::Tick(const float DeltaTime)
@@ -48,7 +50,7 @@ void AHexGridGenerator::Tick(const float DeltaTime)
 	UpdateHoveredTile(Intersection);
 }
 
-void AHexGridGenerator::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+void AHexGridGenerator::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
@@ -68,42 +70,7 @@ void AHexGridGenerator::InitializeGrid()
 
 void AHexGridGenerator::OnRep_GridGenSeed()
 {
-	GenerateBoardTiles(GridGenSeed);
-}
-
-void AHexGridGenerator::GenerateBoardTiles(const int32 Seed)
-{
-	const FIntPoint GridSize = BoardConfig->GetGridTileCount().IntPoint();
-	const FVector& TileSize = BoardConfig->GridTileSize;
-
-	const FVector TileScale = BoardConfig->TileMeshSize / TileSize;
-	const FVector SettlementScale = BoardConfig->SettlementMeshSize / TileSize;
-
-	const TArray<EHexTileType>& TileTypes = BoardConfig->GetShuffledTileTypes(Seed);
-	int32 TileTypeIndex = 0;
-
-	for(int32 X = 0; X < GridSize.X; ++X)
-	{
-		UHexMath::ForEachValidHexRow(X, GridSize, [&](const int32 Y)
-			{
-				const FIntPoint TileIndex = UHexMath::MakeTileIndex(X, Y);
-				const FVector TileLocation = UHexMath::TileIndexToWorld(TileIndex, GridBottomLeftLocation, TileSize);
-
-				AHexTiles*& Tile = PlacedTiles.FindOrAdd(TileIndex);
-				if(!Tile)
-				{
-					const FTransform Transform(FRotator::ZeroRotator, TileLocation, TileScale);
-					Tile = GetWorld()->SpawnActorDeferred<AHexTiles>(BoardConfig->HexTileClass, Transform);
-
-					Tile->TileCoordinates = TileIndex;
-					Tile->TileType = TileTypes[TileTypeIndex++ % TileTypes.Num()];
-					Tile->TileColor = BoardConfig->TileTypeColor[Tile->TileType];
-					UGameplayStatics::FinishSpawningActor(Tile, Transform, ESpawnActorScaleMethod::OverrideRootScale);
-				}
-
-				UHexMath::SpawnVerticesAndEdges(GetWorld(), Tile, TileIndex, GridBottomLeftLocation, TileSize, SettlementScale, PlacedSettlements, PlacedRoads, BoardConfig);
-			});
-	}
+	StartGenerateBoard(GridGenSeed);
 }
 
 bool AHexGridGenerator::TraceMouseToGrid(FVector& OutIntersection) const
@@ -149,4 +116,90 @@ void AHexGridGenerator::UpdateHoveredTile(const FVector& Intersection)
 		TileUnderMouseInfo.Index = ClosestIndex;
 		TileUnderMouseInfo.Actor->OnHighlight();
 	}
+}
+
+void AHexGridGenerator::StartGenerateBoard(const int32 Seed)
+{
+	CurrentX = 0;
+	CurrentColumnRows.Reset();
+
+	GridSize = BoardConfig->GetGridTileCount().IntPoint();
+	const auto [ShuffledTileTypes, ShuffledDiceNumbers] = BoardConfig->GetShuffledTiles(Seed);
+	TileTypes = ShuffledTileTypes;
+	TileDiceNumbers = ShuffledDiceNumbers;
+	TileTypeIndex = 0;
+
+	GetWorld()->GetTimerManager().SetTimer(SpawnTimer, this, &AHexGridGenerator::SpawnNextHex, 0.05f, true);
+}
+
+void AHexGridGenerator::SpawnNextHex()
+{
+	// Move to next column if needed
+	if (CurrentColumnRows.IsEmpty())
+	{
+		if (CurrentX >= GridSize.X)
+		{
+			GetWorld()->GetTimerManager().ClearTimer(SpawnTimer);
+			return;
+		}
+
+		UHexMath::ForEachValidHexRow(CurrentX, GridSize, [this](const int32 Y)
+		{
+			CurrentColumnRows.Add(Y);
+		});
+
+		CurrentYIndex = 0;
+	}
+
+	const int32 Y = CurrentColumnRows[CurrentYIndex++];
+	const FIntPoint TileIndex = UHexMath::MakeTileIndex(CurrentX, Y);
+
+	SpawnSingleHex(TileIndex);
+
+	if (CurrentYIndex >= CurrentColumnRows.Num())
+	{
+		CurrentColumnRows.Reset();
+		++CurrentX;
+	}
+}
+
+void AHexGridGenerator::SpawnSingleHex(const FIntPoint& TileIndex)
+{
+	const FVector& TileSize = BoardConfig->GridTileSize;
+	const FVector TileScale = BoardConfig->TileMeshSize / TileSize;
+	const FVector SettlementScale = BoardConfig->SettlementMeshSize / TileSize;
+
+	const FVector TileLocation = UHexMath::TileIndexToWorld(TileIndex, GridBottomLeftLocation, TileSize);
+
+	AHexTiles*& Tile = PlacedTiles.FindOrAdd(TileIndex);
+	if(!Tile)
+	{
+		const FTransform Transform(FRotator::ZeroRotator, TileLocation, TileScale);
+		Tile = GetWorld()->SpawnActorDeferred<AHexTiles>(BoardConfig->HexTileClass, Transform);
+
+		Tile->TileCoordinates = TileIndex;
+		Tile->TileType = TileTypes[TileTypeIndex % TileTypes.Num()];
+		Tile->DiceNumber = TileDiceNumbers[TileTypeIndex];
+		Tile->TileColor = BoardConfig->TileTypeColor[Tile->TileType];
+
+		UGameplayStatics::FinishSpawningActor(Tile, Transform, ESpawnActorScaleMethod::OverrideRootScale);
+		TileTypeIndex++;
+	}
+
+	UHexMath::SpawnVerticesAndEdges(GetWorld(), Tile, TileIndex, GridBottomLeftLocation, TileSize, SettlementScale, PlacedSettlements, PlacedRoads, BoardConfig);
+}
+
+FHexHitResult AHexGridGenerator::SendCurrentHoverSelection()
+{
+	FHexHitResult Result;
+
+	if(!PlayerController)
+		PlayerController = GetWorld()->GetFirstPlayerController();
+
+	FVector Intersection;
+	if (!TraceMouseToGrid(Intersection)) return Result;
+
+	Result = UHexMath::GetSnapResult(Intersection, GridBottomLeftLocation, TileDiv);
+
+	return Result;
 }

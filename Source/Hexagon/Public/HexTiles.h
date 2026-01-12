@@ -33,6 +33,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(ExposeOnSpawn="true"))
 	TEnumAsByte<EHexTileType> TileType = None;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(ExposeOnSpawn="true"))
+	int32 DiceNumber;
 protected:
 	virtual void BeginPlay() override;
 

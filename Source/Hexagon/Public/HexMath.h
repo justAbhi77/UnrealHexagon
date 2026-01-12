@@ -9,8 +9,6 @@
 
 class UHexBoardConfig;
 
-constexpr float Point3 = 2.f;
-constexpr float Point6 = 4.f;
 constexpr float One6 = 1.f / 6.f;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FValidHexRow, int32, Row);
@@ -39,6 +37,24 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	static void GetHexagonEdges(const FIntPoint& HexagonCenter, TArray<FIntPoint>& OutEdges);
+
+	UFUNCTION(BlueprintCallable)
+	static void GetHexagonNeighbours(const FIntPoint& Hexagon, TArray<FIntPoint>& OutNeighbours);
+
+	UFUNCTION(BlueprintCallable)
+	static void GetVertexHexagons(const FIntPoint& Vertex, TArray<FIntPoint>& OutHexagons);
+
+	UFUNCTION(BlueprintCallable)
+	static void GetVertexEdges(const FIntPoint& Vertex, TArray<FIntPoint>& OutEdges);
+
+	UFUNCTION(BlueprintCallable)
+	static void GetEdgeHexagons(const FIntPoint& Edge, TArray<FIntPoint>& OutHexagons);
+
+	UFUNCTION(BlueprintCallable)
+	static void GetEdgeVertices(const FIntPoint& Edge, TArray<FIntPoint>& OutVertices);
+
+	UFUNCTION(BlueprintCallable)
+	static void GetEdgeEdges(const FIntPoint& Edge, TArray<FIntPoint>& OutEdges);
 
 	UFUNCTION(BlueprintCallable)
 	static FVector CalculateGridBottomLeft(FVector Center, FVector2D GridSize, FVector TileSize);

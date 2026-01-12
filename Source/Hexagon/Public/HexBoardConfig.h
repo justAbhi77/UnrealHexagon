@@ -9,6 +9,16 @@
 
 class AHexTiles;
 
+USTRUCT()
+struct FShuffledTiles
+{
+	GENERATED_BODY()
+
+	TArray<EHexTileType> ShuffledTileTypes;
+
+	TArray<int32> ShuffledDiceNumbers;
+};
+
 /**
  *
  */
@@ -71,7 +81,7 @@ public:
 		return FVector2D(TileSize, TileSize);
 	}
 
-	TArray<EHexTileType> GetShuffledTileTypes(const int32 Seed) const;
+	FShuffledTiles GetShuffledTiles(const int32 Seed) const;
 };
 
 

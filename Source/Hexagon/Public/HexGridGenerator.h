@@ -19,7 +19,9 @@ public:
 
 	virtual void Tick(const float DeltaTime) override;
 
-	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+	FHexHitResult SendCurrentHoverSelection();
 protected:
 	virtual void BeginPlay() override;
 
@@ -67,9 +69,22 @@ private:
 	UFUNCTION()
 	void OnRep_GridGenSeed();
 
-	void GenerateBoardTiles(const int32 Seed);
-
 	/* ===== Mouse ===== */
 	bool TraceMouseToGrid(FVector& OutIntersection) const;
 	void UpdateHoveredTile(const FVector& Intersection);
+	void StartGenerateBoard(int32 Seed);
+	void SpawnNextHex();
+	void SpawnSingleHex(const FIntPoint& TileIndex);
+
+	// Coroutine
+	FIntPoint GridSize;
+	FTimerHandle SpawnTimer;
+	int32 CurrentX = 0;
+	int32 CurrentYIndex = 0;
+	TArray<int32> CurrentColumnRows;
+
+	TArray<EHexTileType> TileTypes;
+	TArray<int32> TileDiceNumbers;
+
+	int32 TileTypeIndex = 0;
 };
