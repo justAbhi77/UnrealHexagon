@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/GameModeBase.h"
+#include "GameFramework/GameMode.h"
 #include "HexGameMode.generated.h"
 
 /*
@@ -12,7 +12,7 @@
  * Registering players with GameState
 */
 UCLASS()
-class HEXAGON_API AHexGameMode : public AGameModeBase
+class HEXAGON_API AHexGameMode : public AGameMode
 {
 	GENERATED_BODY()
 
@@ -20,4 +20,6 @@ public:
 	AHexGameMode();
 
 	virtual void PostLogin(APlayerController* NewPlayer) override;
+
+	virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
 };

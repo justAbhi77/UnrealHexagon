@@ -20,3 +20,8 @@ void AHexGameMode::PostLogin(APlayerController* NewPlayer)
 
 	GS->RegisterPlayer(PS);
 }
+
+AActor* AHexGameMode::ChoosePlayerStart_Implementation(AController* Player)
+{
+	return Super::ChoosePlayerStart_Implementation(Player);
+}

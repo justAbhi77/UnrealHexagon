@@ -30,6 +30,7 @@ void AHexGameState::AdvanceTurn()
 	if(!HasAuthority() || TurnOrder.Num() == 0) return;
 
 	TurnOrder[CurrentTurnIndex]->bIsActiveTurn = false;
+	TurnOrder[CurrentTurnIndex]->OnRep_IsActiveTurn();
 
 	const int32 Direction = bReverseTurnOrder ? -1 : 1;
 	CurrentTurnIndex += Direction;
@@ -44,7 +45,6 @@ void AHexGameState::AdvanceTurn()
 		}
 		else if(SetupRound == EHexSetupRound::Second)
 		{
-			SetupRound = EHexSetupRound::Done;
 			TurnPhase = EHexTurnPhase::Main;
 			bReverseTurnOrder = false;
 			CurrentTurnIndex = 0;
@@ -56,8 +56,8 @@ void AHexGameState::AdvanceTurn()
 	}
 
 	TurnOrder[CurrentTurnIndex]->bIsActiveTurn = true;
+	TurnOrder[CurrentTurnIndex]->OnRep_IsActiveTurn();
 }
-
 
 AHexPlayerState* AHexGameState::GetActivePlayer() const
 {
@@ -68,7 +68,7 @@ AHexPlayerState* AHexGameState::GetActivePlayer() const
 
 void AHexGameState::OnRep_CurrentTurnIndex()
 {
-	// UI hook
+	// UI hook server truth
 }
 
 void AHexGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

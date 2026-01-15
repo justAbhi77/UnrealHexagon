@@ -66,6 +66,5 @@ UENUM()
 enum class EHexSetupRound : uint8
 {
 	First,
-	Second,
-	Done
+	Second
 };

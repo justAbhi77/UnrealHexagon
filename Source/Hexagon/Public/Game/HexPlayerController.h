@@ -21,8 +21,9 @@ public:
 	AHexPlayerController();
 
 	/* ===== Client Input ===== */
-	void SendSelection(const FHexHitResult& Selection);
-	void EndTurn(const FInputActionValue& Value);
+	void ActionEndTurn(const FInputActionValue& Value);
+
+	void EndTurn();
 
 	virtual void SetupInputComponent() override;
 
@@ -34,17 +35,26 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	UInputAction* EndTurnAction;
+
+	void Tick(float DeltaSeconds) override;
+
+	void UpdateHoverWidget();
 protected:
 	virtual void BeginPlay() override;
 
 	UFUNCTION(Server, Reliable)
-	void Server_SendSelection(const FHexHitResult& Selection);
-
-	UFUNCTION(Server, Reliable)
-	void Server_EndTurn();
+	void Server_EndTurn(const FHexHitResult& InSelection);
 
 	void OnLeftMouseClicked(const FInputActionValue& Value);
 
 	UPROPERTY()
 	AHexGridGenerator* AHexGridGen;
+
+	FHexHitResult SendCurrentHoverSelection;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UUserWidget> HoverWidgetClass;
+
+	UPROPERTY()
+	UUserWidget* HoverWidget;
 };

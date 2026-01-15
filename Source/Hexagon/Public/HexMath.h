@@ -7,6 +7,8 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "HexMath.generated.h"
 
+class AHexPlayerState;
+class AHexGameState;
 class UHexBoardConfig;
 
 constexpr float One6 = 1.f / 6.f;
@@ -72,4 +74,10 @@ public:
 	static void SpawnVerticesAndEdges(UWorld* World, AHexTiles* ParentTile, const FIntPoint& TileIndex, const FVector& GridBottomLeft, const FVector& TileSize, const FVector& SettlementScale, TMap<FIntPoint, AHexTiles*>& OutSettlements, TMap<FIntPoint, AHexTiles*>& OutRoads, const UHexBoardConfig* Config);
 
 	static void ForEachValidHexRow(int32 Column, FIntPoint GridSize, const TFunctionRef<void(int32 Row)>& Func);
+
+	UFUNCTION(BlueprintCallable)
+	static bool IsValidEndTurn(const FHexHitResult& InSelection, AHexGameState* HexGs, AHexPlayerState* HexPs);
+
+	UFUNCTION(BlueprintCallable)
+	static bool TraceMouseToGrid(const APlayerController* PlayerController, const FVector& GridCenterLocation, FVector& OutIntersection);
 };

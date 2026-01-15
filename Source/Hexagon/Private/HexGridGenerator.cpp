@@ -5,8 +5,8 @@
 #include "HexBoardConfig.h"
 #include "HexMath.h"
 #include "HexTiles.h"
+#include "Game/HexPlayerController.h"
 #include "Kismet/GameplayStatics.h"
-#include "Kismet/KismetMathLibrary.h"
 #include "Net/UnrealNetwork.h"
 
 
@@ -21,11 +21,10 @@ void AHexGridGenerator::BeginPlay()
 {
 	Super::BeginPlay();
 
-	PlayerController = UGameplayStatics::GetPlayerController(this, 0);
+	APlayerController* Controller = UGameplayStatics::GetPlayerController(this, 0);
+	PlayerController = Cast<AHexPlayerController>(Controller);
 
 	InitializeGrid();
-
-	EnableInput(PlayerController);
 
 	// Server Generates the seed for the game
 	if(!HasAuthority()) return;
@@ -39,12 +38,12 @@ void AHexGridGenerator::Tick(const float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	FVector Intersection;
-	if (!TraceMouseToGrid(Intersection)) return;
+	if (!UHexMath::TraceMouseToGrid(PlayerController, GridCenterLocation, Intersection)) return;
 
 	FVector2D MousePos;
-	if (!PlayerController->GetMousePosition(MousePos.X, MousePos.Y)) return;
+	if(!PlayerController->GetMousePosition(MousePos.X, MousePos.Y)) return;
 
-	if (MousePos.Equals(LastMousePos, 0.1f)) return;
+	if(MousePos.Equals(LastMousePos, 0.1f)) return;
 	LastMousePos = MousePos;
 
 	UpdateHoveredTile(Intersection);
@@ -73,47 +72,25 @@ void AHexGridGenerator::OnRep_GridGenSeed()
 	StartGenerateBoard(GridGenSeed);
 }
 
-bool AHexGridGenerator::TraceMouseToGrid(FVector& OutIntersection) const
-{
-	if (!PlayerController)
-		return false;
-
-	FVector WorldLocation;
-	FVector WorldDirection;
-
-	if (!PlayerController->DeprojectMousePositionToWorld(WorldLocation, WorldDirection))
-		return false;
-
-	const FVector TraceEnd = WorldLocation + WorldDirection * 100000.f;
-
-	// Grid plane (XY plane at grid center Z)
-	const FPlane GridPlane = UKismetMathLibrary::MakePlaneFromPointAndNormal(GridCenterLocation, FVector::UpVector);
-
-	if (float T; !UKismetMathLibrary::LinePlaneIntersection(WorldLocation, TraceEnd, GridPlane, T, OutIntersection))
-		return false;
-
-	return true;
-}
-
 void AHexGridGenerator::UpdateHoveredTile(const FVector& Intersection)
 {
-	const auto [bHit, SnapType, ClosestIndex] = UHexMath::GetSnapResult(Intersection, GridBottomLeftLocation, TileDiv);
+	MouseHoverResult = UHexMath::GetSnapResult(Intersection, GridBottomLeftLocation, TileDiv);
 
-	if (!bHit) return;
+	if (!MouseHoverResult.bHit) return;
 
-	if (TileUnderMouseInfo.Index == ClosestIndex) return;
+	if (TileUnderMouseInfo.Index == MouseHoverResult.ClosestIndex) return;
 
 	if (TileUnderMouseInfo.Actor)
 	{
 		TileUnderMouseInfo.Actor->OnUnHighlight();
 	}
 
-	auto& Map = SnapType == EHexSnapType::Tile ? PlacedTiles : (SnapType == EHexSnapType::Vertex ? PlacedSettlements : PlacedRoads);;
+	auto& Map = MouseHoverResult.SnapType == EHexSnapType::Tile ? PlacedTiles : (MouseHoverResult.SnapType == EHexSnapType::Vertex ? PlacedSettlements : PlacedRoads);
 
-	if (AHexTiles** Found = Map.Find(ClosestIndex))
+	if (AHexTiles** Found = Map.Find(MouseHoverResult.ClosestIndex))
 	{
 		TileUnderMouseInfo.Actor = *Found;
-		TileUnderMouseInfo.Index = ClosestIndex;
+		TileUnderMouseInfo.Index = MouseHoverResult.ClosestIndex;
 		TileUnderMouseInfo.Actor->OnHighlight();
 	}
 }
@@ -189,17 +166,7 @@ void AHexGridGenerator::SpawnSingleHex(const FIntPoint& TileIndex)
 	UHexMath::SpawnVerticesAndEdges(GetWorld(), Tile, TileIndex, GridBottomLeftLocation, TileSize, SettlementScale, PlacedSettlements, PlacedRoads, BoardConfig);
 }
 
-FHexHitResult AHexGridGenerator::SendCurrentHoverSelection()
+FHexHitResult AHexGridGenerator::SendCurrentHoverSelection() const
 {
-	FHexHitResult Result;
-
-	if(!PlayerController)
-		PlayerController = GetWorld()->GetFirstPlayerController();
-
-	FVector Intersection;
-	if (!TraceMouseToGrid(Intersection)) return Result;
-
-	Result = UHexMath::GetSnapResult(Intersection, GridBottomLeftLocation, TileDiv);
-
-	return Result;
+	return MouseHoverResult;
 }

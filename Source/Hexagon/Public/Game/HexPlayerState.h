@@ -24,13 +24,10 @@ public:
 	UPROPERTY(Replicated, VisibleAnywhere, Category="Turn")
 	int32 PlayerIndex;
 
-	UPROPERTY(Replicated, VisibleAnywhere, Category="Turn")
+	UPROPERTY(ReplicatedUsing=OnRep_IsActiveTurn, VisibleAnywhere, Category="Turn")
 	bool bIsActiveTurn;
 
-	UPROPERTY(ReplicatedUsing=OnRep_LastSelection, VisibleAnywhere, Category="Turn")
-	FHexHitResult LastSelection;
-
 	UFUNCTION()
-	void OnRep_LastSelection();
+	void OnRep_IsActiveTurn();
 };
 

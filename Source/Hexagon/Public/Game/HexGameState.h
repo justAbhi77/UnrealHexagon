@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "HexTypes.h"
-#include "GameFramework/GameStateBase.h"
+#include "GameFramework/GameState.h"
 #include "HexGameState.generated.h"
 
 class AHexPlayerState;
@@ -13,7 +13,7 @@ class AHexPlayerState;
  *
  */
 UCLASS()
-class HEXAGON_API AHexGameState : public AGameStateBase
+class HEXAGON_API AHexGameState : public AGameState
 {
 	GENERATED_BODY()
 
@@ -32,6 +32,7 @@ public:
 	TArray<AHexPlayerState*> TurnOrder;
 
 	void RegisterPlayer(AHexPlayerState* PlayerState);
+
 	void AdvanceTurn();
 
 	UFUNCTION()

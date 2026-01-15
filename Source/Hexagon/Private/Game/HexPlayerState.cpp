@@ -11,9 +11,8 @@ AHexPlayerState::AHexPlayerState()
 	bIsActiveTurn = false;
 }
 
-void AHexPlayerState::OnRep_LastSelection()
+void AHexPlayerState::OnRep_IsActiveTurn()
 {
-	// Visual / UI update hook
 }
 
 void AHexPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -22,5 +21,4 @@ void AHexPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 
 	DOREPLIFETIME(AHexPlayerState, PlayerIndex);
 	DOREPLIFETIME(AHexPlayerState, bIsActiveTurn);
-	DOREPLIFETIME(AHexPlayerState, LastSelection);
 }

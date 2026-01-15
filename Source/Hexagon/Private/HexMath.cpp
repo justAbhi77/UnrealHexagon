@@ -5,6 +5,7 @@
 #include "HexTiles.h"
 #include "HexTypes.h"
 #include "HexBoardConfig.h"
+#include "Game/HexGameState.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 
@@ -311,4 +312,52 @@ void UHexMath::SpawnVerticesAndEdges(UWorld* World, AHexTiles* ParentTile, const
 
 		UGameplayStatics::FinishSpawningActor(Road, RoadTransform, ESpawnActorScaleMethod::OverrideRootScale);
 	}
+}
+
+bool UHexMath::IsValidEndTurn(const FHexHitResult& InSelection, AHexGameState* HexGs, AHexPlayerState* HexPs)
+{
+	if(!HexPs || !HexGs) return false;
+
+	if(HexGs->GetActivePlayer() != HexPs) return false;
+
+	switch(HexGs->TurnPhase)
+	{
+	case EHexTurnPhase::Setup:
+		switch(HexGs->SetupRound)
+		{
+		case EHexSetupRound::First:
+			if(InSelection.SnapType == EHexSnapType::Vertex)
+				return true;
+		case EHexSetupRound::Second:
+			if(InSelection.SnapType == EHexSnapType::Edge)
+				return true;
+		}
+		break;
+	case EHexTurnPhase::Main:
+		return true;
+	}
+
+	return false;
+}
+
+bool UHexMath::TraceMouseToGrid(const APlayerController* PlayerController, const FVector& GridCenterLocation, FVector& OutIntersection)
+{
+	if (!PlayerController)
+		return false;
+
+	FVector WorldLocation;
+	FVector WorldDirection;
+
+	if (!PlayerController->DeprojectMousePositionToWorld(WorldLocation, WorldDirection))
+		return false;
+
+	const FVector TraceEnd = WorldLocation + WorldDirection * 100000.f;
+
+	// Grid plane (XY plane at grid center Z)
+	const FPlane GridPlane = UKismetMathLibrary::MakePlaneFromPointAndNormal(GridCenterLocation, FVector::UpVector);
+
+	if (float T; !UKismetMathLibrary::LinePlaneIntersection(WorldLocation, TraceEnd, GridPlane, T, OutIntersection))
+		return false;
+
+	return true;
 }

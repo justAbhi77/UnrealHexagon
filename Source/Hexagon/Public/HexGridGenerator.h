@@ -7,6 +7,7 @@
 #include "GameFramework/Actor.h"
 #include "HexGridGenerator.generated.h"
 
+class AHexPlayerController;
 class UHexBoardConfig;
 
 UCLASS()
@@ -21,7 +22,7 @@ public:
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-	FHexHitResult SendCurrentHoverSelection();
+	FHexHitResult SendCurrentHoverSelection() const;
 protected:
 	virtual void BeginPlay() override;
 
@@ -31,7 +32,7 @@ private:
 	TObjectPtr<UHexBoardConfig> BoardConfig;
 
 	UPROPERTY()
-	TObjectPtr<APlayerController> PlayerController;
+	TObjectPtr<AHexPlayerController> PlayerController;
 
 	/* ===== Grid Cache ===== */
 	UPROPERTY(VisibleAnywhere, ReplicatedUsing = OnRep_GridGenSeed, Category="Hex Grid")
@@ -70,7 +71,6 @@ private:
 	void OnRep_GridGenSeed();
 
 	/* ===== Mouse ===== */
-	bool TraceMouseToGrid(FVector& OutIntersection) const;
 	void UpdateHoveredTile(const FVector& Intersection);
 	void StartGenerateBoard(int32 Seed);
 	void SpawnNextHex();
@@ -82,6 +82,7 @@ private:
 	int32 CurrentX = 0;
 	int32 CurrentYIndex = 0;
 	TArray<int32> CurrentColumnRows;
+	FHexHitResult MouseHoverResult;
 
 	TArray<EHexTileType> TileTypes;
 	TArray<int32> TileDiceNumbers;
