@@ -11,6 +11,8 @@
 #include "HexMath.h"
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
+#include "Ui/HexHoverUi.h"
+#include "Ui/HexHudUi.h"
 
 AHexPlayerController::AHexPlayerController()
 {
@@ -29,11 +31,21 @@ void AHexPlayerController::BeginPlay()
 		}
 	}
 
-	if(IsLocalController() && HoverWidgetClass)
+	if(IsLocalController())
 	{
-		HoverWidget = CreateWidget(this, HoverWidgetClass);
-		HoverWidget->AddToViewport();
-		HoverWidget->SetVisibility(ESlateVisibility::Hidden);
+		if(HoverWidgetClass)
+		{
+			HoverWidget = CreateWidget<UHexHoverUi>(this, HoverWidgetClass);
+			HoverWidget->AddToViewport();
+			HoverWidget->SetVisibility(ESlateVisibility::Hidden);
+		}
+
+		if(HudWidgetClass)
+		{
+			HudWidget = CreateWidget<UHexHudUi>(this, HudWidgetClass);
+			HudWidget->AddToViewport();
+			HudWidget->SetVisibility(ESlateVisibility::Visible);
+		}
 	}
 }
 
@@ -44,7 +56,7 @@ void AHexPlayerController::Tick(const float DeltaSeconds)
 	UpdateHoverWidget();
 }
 
-void AHexPlayerController::UpdateHoverWidget()
+void AHexPlayerController::UpdateHoverWidget() const
 {
 	if(!HoverWidget || !AHexGridGen || !IsLocalController()) return;
 
@@ -56,9 +68,30 @@ void AHexPlayerController::UpdateHoverWidget()
 
 	HoverWidget->SetVisibility(ESlateVisibility::Visible);
 
-	float X, Y;
-	GetMousePosition(X, Y);
-	HoverWidget->SetPositionInViewport(FVector2D(X + 12.f, Y + 12.f));
+	float MouseX, MouseY;
+	GetMousePosition(MouseX, MouseY);
+
+	int32 ViewX, ViewY;
+	GetViewportSize(ViewX, ViewY);
+
+	const FVector2D Cursor(MouseX, MouseY);
+	const FVector2D Offset(12.f, 12.f);
+	const FVector2D WidgetSize = HoverWidget->GetDesiredSize();
+
+	FVector2D Pos = Cursor + Offset;
+
+	// Flip horizontally if overflowing right
+	if (Pos.X + WidgetSize.X > ViewX)
+		Pos.X = Cursor.X - WidgetSize.X - Offset.X;
+
+	// Flip vertically if overflowing bottom
+	if (Pos.Y + WidgetSize.Y > ViewY)
+		Pos.Y = Cursor.Y - WidgetSize.Y - Offset.Y;
+
+	Pos.X = FMath::Clamp(Pos.X, 0.f, ViewX - WidgetSize.X);
+	Pos.Y = FMath::Clamp(Pos.Y, 0.f, ViewY - WidgetSize.Y);
+
+	HoverWidget->SetPositionInViewport(Pos, false);
 }
 
 void AHexPlayerController::SetupInputComponent()

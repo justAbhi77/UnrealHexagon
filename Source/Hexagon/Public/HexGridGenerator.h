@@ -52,13 +52,7 @@ private:
 
 	/* ===== Placed Actors ===== */
 	UPROPERTY()
-	TMap<FIntPoint, AHexTiles*> PlacedTiles;
-
-	UPROPERTY()
-	TMap<FIntPoint, AHexTiles*> PlacedSettlements;
-
-	UPROPERTY()
-	TMap<FIntPoint, AHexTiles*> PlacedRoads;
+	TMap<FIntPoint, AHexTiles*> SpawnedHexTiles;
 
 	/* ===== Mouse Interaction ===== */
 	FHexMouseOverInfo TileUnderMouseInfo;

@@ -76,8 +76,6 @@ void AHexGridGenerator::UpdateHoveredTile(const FVector& Intersection)
 {
 	MouseHoverResult = UHexMath::GetSnapResult(Intersection, GridBottomLeftLocation, TileDiv);
 
-	if (!MouseHoverResult.bHit) return;
-
 	if (TileUnderMouseInfo.Index == MouseHoverResult.ClosestIndex) return;
 
 	if (TileUnderMouseInfo.Actor)
@@ -85,10 +83,9 @@ void AHexGridGenerator::UpdateHoveredTile(const FVector& Intersection)
 		TileUnderMouseInfo.Actor->OnUnHighlight();
 	}
 
-	auto& Map = MouseHoverResult.SnapType == EHexSnapType::Tile ? PlacedTiles : (MouseHoverResult.SnapType == EHexSnapType::Vertex ? PlacedSettlements : PlacedRoads);
-
-	if (AHexTiles** Found = Map.Find(MouseHoverResult.ClosestIndex))
+	if (AHexTiles** Found = SpawnedHexTiles.Find(MouseHoverResult.ClosestIndex))
 	{
+		MouseHoverResult.bHit = true;
 		TileUnderMouseInfo.Actor = *Found;
 		TileUnderMouseInfo.Index = MouseHoverResult.ClosestIndex;
 		TileUnderMouseInfo.Actor->OnHighlight();
@@ -148,7 +145,7 @@ void AHexGridGenerator::SpawnSingleHex(const FIntPoint& TileIndex)
 
 	const FVector TileLocation = UHexMath::TileIndexToWorld(TileIndex, GridBottomLeftLocation, TileSize);
 
-	AHexTiles*& Tile = PlacedTiles.FindOrAdd(TileIndex);
+	AHexTiles*& Tile = SpawnedHexTiles.FindOrAdd(TileIndex);
 	if(!Tile)
 	{
 		const FTransform Transform(FRotator::ZeroRotator, TileLocation, TileScale);
@@ -163,7 +160,7 @@ void AHexGridGenerator::SpawnSingleHex(const FIntPoint& TileIndex)
 		TileTypeIndex++;
 	}
 
-	UHexMath::SpawnVerticesAndEdges(GetWorld(), Tile, TileIndex, GridBottomLeftLocation, TileSize, SettlementScale, PlacedSettlements, PlacedRoads, BoardConfig);
+	UHexMath::SpawnVerticesAndEdges(GetWorld(), Tile, TileIndex, GridBottomLeftLocation, TileSize, SettlementScale, SpawnedHexTiles, BoardConfig);
 }
 
 FHexHitResult AHexGridGenerator::SendCurrentHoverSelection() const

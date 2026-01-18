@@ -71,9 +71,12 @@ public:
 	static FHexHitResult GetSnapResult(const FVector& Intersection, const FVector& GridBottomLeft, const FVector2D& TileDiv);
 
 	UFUNCTION(BlueprintCallable)
-	static void SpawnVerticesAndEdges(UWorld* World, AHexTiles* ParentTile, const FIntPoint& TileIndex, const FVector& GridBottomLeft, const FVector& TileSize, const FVector& SettlementScale, TMap<FIntPoint, AHexTiles*>& OutSettlements, TMap<FIntPoint, AHexTiles*>& OutRoads, const UHexBoardConfig* Config);
+	static void SpawnVerticesAndEdges(UWorld* World, AHexTiles* ParentTile, const FIntPoint& TileIndex, const FVector& GridBottomLeft, const FVector& TileSize, const FVector& SettlementScale, TMap<FIntPoint, AHexTiles*>& OutSpawnTiles, const UHexBoardConfig* Config);
 
 	static void ForEachValidHexRow(int32 Column, FIntPoint GridSize, const TFunctionRef<void(int32 Row)>& Func);
+
+	UFUNCTION(BlueprintCallable)
+	static bool IsValidIndex(const FIntPoint& Index, const FIntPoint GridSize);
 
 	UFUNCTION(BlueprintCallable)
 	static bool IsValidEndTurn(const FHexHitResult& InSelection, AHexGameState* HexGs, AHexPlayerState* HexPs);

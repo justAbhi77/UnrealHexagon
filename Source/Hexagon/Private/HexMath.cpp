@@ -235,7 +235,6 @@ FHexHitResult UHexMath::GetSnapResult(const FVector& Intersection, const FVector
 		}
 	}
 
-	Result.bHit = true;
 	return Result;
 }
 
@@ -257,7 +256,12 @@ void UHexMath::ForEachValidHexRow(const int32 Column, const FIntPoint GridSize, 
 		Func(Y);
 }
 
-void UHexMath::SpawnVerticesAndEdges(UWorld* World, AHexTiles* ParentTile, const FIntPoint& TileIndex, const FVector& GridBottomLeft, const FVector& TileSize, const FVector& SettlementScale, TMap<FIntPoint, AHexTiles*>& OutSettlements, TMap<FIntPoint, AHexTiles*>& OutRoads, const UHexBoardConfig* Config)
+bool UHexMath::IsValidIndex(const FIntPoint& Index, const FIntPoint GridSize)
+{
+
+}
+
+void UHexMath::SpawnVerticesAndEdges(UWorld* World, AHexTiles* ParentTile, const FIntPoint& TileIndex, const FVector& GridBottomLeft, const FVector& TileSize, const FVector& SettlementScale, TMap<FIntPoint, AHexTiles*>& OutSpawnTiles, const UHexBoardConfig* Config)
 {
 	const float TileX075 = TileSize.X * 0.125f;
 	const float TileY05  = TileSize.Y * 0.5f * One6;
@@ -272,7 +276,7 @@ void UHexMath::SpawnVerticesAndEdges(UWorld* World, AHexTiles* ParentTile, const
 		const FVector VertexWorld = GridBottomLeft + FVector(Vertex.X * TileX075, Vertex.Y * TileY05, TileSize.Z * 1.1f);
 
 		/* ===== Settlement ===== */
-		AHexTiles*& Settlement = OutSettlements.FindOrAdd(Vertex);
+		AHexTiles*& Settlement = OutSpawnTiles.FindOrAdd(Vertex);
 		if (!Settlement)
 		{
 			FTransform Transform(FRotator::ZeroRotator, VertexWorld, SettlementScale);
@@ -296,7 +300,7 @@ void UHexMath::SpawnVerticesAndEdges(UWorld* World, AHexTiles* ParentTile, const
 		const FIntPoint MidPoint = (Vertex + NextVertex) / 2;
 		const FVector MidPointWorld = (VertexWorld + NextWorld) * 0.5f;
 
-		AHexTiles*& Road = OutRoads.FindOrAdd(MidPoint);
+		AHexTiles*& Road = OutSpawnTiles.FindOrAdd(MidPoint);
 		if (Road)
 			continue;
 
