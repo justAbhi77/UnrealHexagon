@@ -13,6 +13,7 @@ AHexPlayerState::AHexPlayerState()
 
 void AHexPlayerState::OnRep_IsActiveTurn()
 {
+
 }
 
 void AHexPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

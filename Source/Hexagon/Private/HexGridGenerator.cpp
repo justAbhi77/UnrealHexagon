@@ -97,7 +97,7 @@ void AHexGridGenerator::StartGenerateBoard(const int32 Seed)
 	CurrentX = 0;
 	CurrentColumnRows.Reset();
 
-	GridSize = BoardConfig->GetGridTileCount().IntPoint();
+	GridSize = BoardConfig->GetGridTileCount();
 	const auto [ShuffledTileTypes, ShuffledDiceNumbers] = BoardConfig->GetShuffledTiles(Seed);
 	TileTypes = ShuffledTileTypes;
 	TileDiceNumbers = ShuffledDiceNumbers;

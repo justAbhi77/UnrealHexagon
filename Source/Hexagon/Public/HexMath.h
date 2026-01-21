@@ -73,10 +73,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	static void SpawnVerticesAndEdges(UWorld* World, AHexTiles* ParentTile, const FIntPoint& TileIndex, const FVector& GridBottomLeft, const FVector& TileSize, const FVector& SettlementScale, TMap<FIntPoint, AHexTiles*>& OutSpawnTiles, const UHexBoardConfig* Config);
 
-	static void ForEachValidHexRow(int32 Column, FIntPoint GridSize, const TFunctionRef<void(int32 Row)>& Func);
+	static void GetValidRowForColumn(int32 Column, FIntPoint GridSize, int32& OutLowerBound, int32& OutUpperBound);
 
-	UFUNCTION(BlueprintCallable)
-	static bool IsValidIndex(const FIntPoint& Index, const FIntPoint GridSize);
+	static void ForEachValidHexRow(int32 Column, FIntPoint GridSize, const TFunctionRef<void(int32 Row)>& Func);
 
 	UFUNCTION(BlueprintCallable)
 	static bool IsValidEndTurn(const FHexHitResult& InSelection, AHexGameState* HexGs, AHexPlayerState* HexPs);

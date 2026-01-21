@@ -2,6 +2,7 @@
 
 
 #include "Game/HexGameState.h"
+#include "Game/HexPlayerController.h"
 #include "Game/HexPlayerState.h"
 #include "Net/UnrealNetwork.h"
 
@@ -68,7 +69,10 @@ AHexPlayerState* AHexGameState::GetActivePlayer() const
 
 void AHexGameState::OnRep_CurrentTurnIndex()
 {
-	// UI hook server truth
+}
+
+void AHexGameState::OnRep_TurnOrder()
+{
 }
 
 void AHexGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

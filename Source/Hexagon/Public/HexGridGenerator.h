@@ -14,6 +14,8 @@ UCLASS()
 class HEXAGON_API AHexGridGenerator : public AActor
 {
 	GENERATED_BODY()
+protected:
+	virtual void BeginPlay() override;
 
 public:
 	AHexGridGenerator();
@@ -23,10 +25,7 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	FHexHitResult SendCurrentHoverSelection() const;
-protected:
-	virtual void BeginPlay() override;
 
-private:
 	/* ===== Config ===== */
 	UPROPERTY(EditAnywhere, Category="Hex Grid")
 	TObjectPtr<UHexBoardConfig> BoardConfig;

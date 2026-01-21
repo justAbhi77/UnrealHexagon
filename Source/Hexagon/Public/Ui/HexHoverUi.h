@@ -16,8 +16,6 @@ class HEXAGON_API UHexHoverUi : public UUserWidget
 {
 	GENERATED_BODY()
 public:
-
-private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess = "true", BindWidget))
 	TObjectPtr<UHexDataUi> TileType;
 

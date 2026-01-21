@@ -75,10 +75,10 @@ public:
 	};
 
 	// Returns total grid tile count
-	FVector2D GetGridTileCount() const
+	FIntPoint GetGridTileCount() const
 	{
 		const int TileSize = HexagonGridSize * 2 - 1;
-		return FVector2D(TileSize, TileSize);
+		return FIntPoint(TileSize, TileSize);
 	}
 
 	FShuffledTiles GetShuffledTiles(const int32 Seed) const;
@@ -93,7 +93,7 @@ void ShuffleArray(T& InArray, const int32 Seed)
 	for (int32 i = 0; i < LastIndex; ++i)
 	{
 		const int32 Index = Stream.RandRange(0, LastIndex);
-		if (i != Index)
-			InArray.Swap(i, Index);
+		if (i == Index) continue;
+		InArray.Swap(i, Index);
 	}
 }

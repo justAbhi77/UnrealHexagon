@@ -9,8 +9,10 @@
 #include "HexGridGenerator.h"
 #include "HexHelper.h"
 #include "HexMath.h"
+#include "HexTiles.h"
 #include "Blueprint/UserWidget.h"
 #include "Kismet/GameplayStatics.h"
+#include "Ui/HexDataUi.h"
 #include "Ui/HexHoverUi.h"
 #include "Ui/HexHudUi.h"
 
@@ -47,11 +49,17 @@ void AHexPlayerController::BeginPlay()
 			HudWidget->SetVisibility(ESlateVisibility::Visible);
 		}
 	}
+
+	if(!AHexGridGen)
+		AHexGridGen = Cast<AHexGridGenerator>(UGameplayStatics::GetActorOfClass(this, AHexGridGenerator::StaticClass()));
 }
 
 void AHexPlayerController::Tick(const float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+
+	if(!AHexGridGen)
+		AHexGridGen = Cast<AHexGridGenerator>(UGameplayStatics::GetActorOfClass(this, AHexGridGenerator::StaticClass()));
 
 	UpdateHoverWidget();
 }
@@ -60,38 +68,58 @@ void AHexPlayerController::UpdateHoverWidget() const
 {
 	if(!HoverWidget || !AHexGridGen || !IsLocalController()) return;
 
-	if(SendCurrentHoverSelection.SnapType == EHexSnapType::None)
+	float MouseX, MouseY;
+	if(!GetMousePosition(MouseX, MouseY))
 	{
 		HoverWidget->SetVisibility(ESlateVisibility::Hidden);
 		return;
 	}
 
-	HoverWidget->SetVisibility(ESlateVisibility::Visible);
+	const FHexHitResult CurrentHoverSelection = AHexGridGen->SendCurrentHoverSelection();
 
-	float MouseX, MouseY;
-	GetMousePosition(MouseX, MouseY);
+	if(CurrentHoverSelection.SnapType == EHexSnapType::None)
+	{
+		HoverWidget->SetVisibility(ESlateVisibility::Hidden);
+		return;
+	}
+
+	AHexTiles** HexTiles = AHexGridGen->SpawnedHexTiles.Find(CurrentHoverSelection.ClosestIndex);
+	if(!HexTiles || !*HexTiles)
+	{
+		HoverWidget->SetVisibility(ESlateVisibility::Hidden);
+		return;
+	}
+
+	const AHexTiles* HexTile = *HexTiles;
+	const FString ValueAsString = UEnum::GetValueAsString(HexTile->TileType);
+	const FText TileType = FText::FromString(ValueAsString + HexTile->TileCoordinates.ToString());
+	HoverWidget->TileType->SetTexts(HoverWidget->TileType->HeadingText, TileType);
+	HoverWidget->DiceNumber->SetTexts(HoverWidget->DiceNumber->HeadingText, FText::AsNumber(HexTile->DiceNumber));
+	HoverWidget->Owner->SetTexts(HoverWidget->Owner->HeadingText, FText::FromString("--"));
+	HoverWidget->SetVisibility(ESlateVisibility::Visible);
 
 	int32 ViewX, ViewY;
 	GetViewportSize(ViewX, ViewY);
 
 	const FVector2D Cursor(MouseX, MouseY);
-	const FVector2D Offset(12.f, 12.f);
 	const FVector2D WidgetSize = HoverWidget->GetDesiredSize();
 
-	FVector2D Pos = Cursor + Offset;
+	// Start by placing widget to the bottom-right of cursor
+	FVector2D Pos = Cursor + WidgetOffset;
 
 	// Flip horizontally if overflowing right
 	if (Pos.X + WidgetSize.X > ViewX)
-		Pos.X = Cursor.X - WidgetSize.X - Offset.X;
+		Pos.X = Cursor.X - WidgetOffset.X - WidgetSize.X;
 
 	// Flip vertically if overflowing bottom
 	if (Pos.Y + WidgetSize.Y > ViewY)
-		Pos.Y = Cursor.Y - WidgetSize.Y - Offset.Y;
+		Pos.Y = Cursor.Y - WidgetOffset.Y - WidgetSize.Y;
 
-	Pos.X = FMath::Clamp(Pos.X, 0.f, ViewX - WidgetSize.X);
-	Pos.Y = FMath::Clamp(Pos.Y, 0.f, ViewY - WidgetSize.Y);
+	// Final safety clamp
+	Pos.X = FMath::Clamp(Pos.X, 0.0f, ViewX - WidgetSize.X);
+	Pos.Y = FMath::Clamp(Pos.Y, 0.0f, ViewY - WidgetSize.Y);
 
-	HoverWidget->SetPositionInViewport(Pos, false);
+	HoverWidget->SetPositionInViewport(Pos);
 }
 
 void AHexPlayerController::SetupInputComponent()
@@ -130,6 +158,12 @@ void AHexPlayerController::OnLeftMouseClicked(const FInputActionValue& Value)
 	if(!AHexGridGen) return;
 
 	SendCurrentHoverSelection = AHexGridGen->SendCurrentHoverSelection();
+
+	if(!HudWidget || !HudWidget->CurrentSelectedTile) return;
+	const FString ValueAsString = UEnum::GetValueAsString(SendCurrentHoverSelection.SnapType);
+	const FText TileText = FText::FromString(ValueAsString + SendCurrentHoverSelection.ClosestIndex.ToString());
+
+	HudWidget->CurrentSelectedTile->SetTexts(FText::FromString("Selected Tile"), TileText);
 }
 
 void AHexPlayerController::Server_EndTurn_Implementation(const FHexHitResult& InSelection)

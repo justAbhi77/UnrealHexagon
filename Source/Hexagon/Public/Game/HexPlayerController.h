@@ -55,14 +55,17 @@ protected:
 	FHexHitResult SendCurrentHoverSelection;
 
 	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<UUserWidget> HoverWidgetClass;
+	TSubclassOf<UHexHoverUi> HoverWidgetClass;
 
 	UPROPERTY()
 	UHexHoverUi* HoverWidget;
 
 	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<UHexHoverUi> HudWidgetClass;
+	TSubclassOf<UHexHudUi> HudWidgetClass;
 
 	UPROPERTY()
 	UHexHudUi* HudWidget;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FVector2D WidgetOffset{12.f, 12.f};
 };

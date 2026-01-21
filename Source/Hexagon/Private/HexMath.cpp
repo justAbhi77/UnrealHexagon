@@ -238,27 +238,29 @@ FHexHitResult UHexMath::GetSnapResult(const FVector& Intersection, const FVector
 	return Result;
 }
 
-void UHexMath::ForEachValidHexRow(const int32 Column, const FIntPoint GridSize, const TFunctionRef<void(int32 Row)>& Func)
+void UHexMath::GetValidRowForColumn(const int32 Column, const FIntPoint GridSize, int32& OutLowerBound, int32& OutUpperBound)
 {
 	const bool bShouldNotSubtract = ((GridSize.X + 1) / 2) % 2 == 0;
 
 	const int32 Bounds = FMath::Abs((GridSize.X - (Column * 2 + 1)) / 2);
 
-	const int32 LowerBound = bShouldNotSubtract ? Bounds + 1 : Bounds;
+	OutLowerBound = bShouldNotSubtract ? Bounds + 1 : Bounds;
 
 	const int32 RowOffset = Bounds % 2 == 0 ? Bounds : Bounds - 1;
 
 	const int32 EndY = GridSize.Y * 2 - 1 - RowOffset;
 
-	const int32 UpperBound = bShouldNotSubtract ? EndY : EndY - 1;
+	OutUpperBound = bShouldNotSubtract ? EndY : EndY - 1;
+}
+
+void UHexMath::ForEachValidHexRow(const int32 Column, const FIntPoint GridSize, const TFunctionRef<void(int32 Row)>& Func)
+{
+	int32 LowerBound, UpperBound;
+
+	GetValidRowForColumn(Column, GridSize, LowerBound, UpperBound);
 
 	for(int32 Y = LowerBound; Y <= UpperBound; Y += 2)
 		Func(Y);
-}
-
-bool UHexMath::IsValidIndex(const FIntPoint& Index, const FIntPoint GridSize)
-{
-
 }
 
 void UHexMath::SpawnVerticesAndEdges(UWorld* World, AHexTiles* ParentTile, const FIntPoint& TileIndex, const FVector& GridBottomLeft, const FVector& TileSize, const FVector& SettlementScale, TMap<FIntPoint, AHexTiles*>& OutSpawnTiles, const UHexBoardConfig* Config)

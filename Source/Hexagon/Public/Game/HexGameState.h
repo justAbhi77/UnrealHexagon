@@ -28,7 +28,7 @@ public:
 	UPROPERTY(Replicated, VisibleAnywhere, Category="Turn")
 	EHexTurnPhase TurnPhase;
 
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing=OnRep_TurnOrder)
 	TArray<AHexPlayerState*> TurnOrder;
 
 	void RegisterPlayer(AHexPlayerState* PlayerState);
@@ -37,6 +37,9 @@ public:
 
 	UFUNCTION()
 	void OnRep_CurrentTurnIndex();
+
+	UFUNCTION()
+	void OnRep_TurnOrder();
 
 	AHexPlayerState* GetActivePlayer() const;
 
