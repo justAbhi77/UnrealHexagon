@@ -5,7 +5,7 @@
 
 class AHexTiles;
 
-UENUM()
+UENUM(BlueprintType)
 enum class EHexSnapType : uint8
 {
 	None,
@@ -15,7 +15,7 @@ enum class EHexSnapType : uint8
 };
 
 UENUM(BlueprintType)
-enum EHexTileType : uint8
+enum class EHexTileType : uint8
 {
 	None,
 	Desert,
@@ -55,14 +55,14 @@ struct FHexMouseOverInfo
 	FVector2D Index = FVector2D(-1, -1);
 };
 
-UENUM()
+UENUM(BlueprintType)
 enum class EHexTurnPhase : uint8
 {
 	Setup,
 	Main,
 };
 
-UENUM()
+UENUM(BlueprintType)
 enum class EHexSetupRound : uint8
 {
 	First,

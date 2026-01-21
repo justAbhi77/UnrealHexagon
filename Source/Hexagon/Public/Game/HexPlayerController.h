@@ -41,6 +41,9 @@ public:
 	virtual void Tick(float DeltaSeconds) override;
 
 	void UpdateHoverWidget() const;
+
+	UFUNCTION()
+	void OnEndTurnPressed();
 protected:
 	virtual void BeginPlay() override;
 
@@ -68,4 +71,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	FVector2D WidgetOffset{12.f, 12.f};
+
+	UPROPERTY()
+	AHexTiles* SelectedTile;
 };

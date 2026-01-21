@@ -40,7 +40,7 @@ FShuffledTiles UHexBoardConfig::GetShuffledTiles(const int32 Seed) const
 
 	for (const EHexTileType TileType : TileTypes)
 	{
-		if (TileType == Desert)
+		if (TileType == EHexTileType::Desert)
 			ShuffledTiles.ShuffledDiceNumbers.Add(-1); // 0 = no dice
 		else
 		{

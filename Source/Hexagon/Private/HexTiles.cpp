@@ -22,10 +22,19 @@ void AHexTiles::OnUnHighlight()
 	OnTileUnHighlighted();
 }
 
+void AHexTiles::OnSelected()
+{
+	OnTileSelected();
+}
+
+void AHexTiles::OnUnSelected()
+{
+	OnTileUnSelected();
+}
+
 void AHexTiles::BeginPlay()
 {
 	Super::BeginPlay();
-
 }
 
 void AHexTiles::Tick(const float DeltaTime)

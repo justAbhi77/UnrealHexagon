@@ -32,10 +32,20 @@ public:
 	void OnUnHighlight();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(ExposeOnSpawn="true"))
-	TEnumAsByte<EHexTileType> TileType = None;
+	EHexTileType TileType = EHexTileType::None;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(ExposeOnSpawn="true"))
 	int32 DiceNumber;
+
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
+	void OnTileSelected();
+
+	void OnSelected();
+
+	UFUNCTION(BlueprintCallable, BlueprintImplementableEvent)
+	void OnTileUnSelected();
+
+	void OnUnSelected();
 protected:
 	virtual void BeginPlay() override;
 

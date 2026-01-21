@@ -54,7 +54,7 @@ public:
 	TSubclassOf<AHexTiles> RoadTileClass;
 
 	UPROPERTY(EditAnywhere)
-	TMap<TEnumAsByte<EHexTileType>, int32> TileTypeDistribution = {
+	TMap<EHexTileType, int32> TileTypeDistribution = {
 		{EHexTileType::Desert, 1},
 		{EHexTileType::Brick, 3},
 		{EHexTileType::Forest, 4},
@@ -64,7 +64,7 @@ public:
 	};
 
 	UPROPERTY(EditAnywhere)
-	TMap<TEnumAsByte<EHexTileType>, FLinearColor> TileTypeColor =
+	TMap<EHexTileType, FLinearColor> TileTypeColor =
 	{
 		{ EHexTileType::Desert,     FLinearColor(0.85f, 0.80f, 0.55f, 1.f) }, // sand
 		{ EHexTileType::Brick,      FLinearColor(0.72f, 0.25f, 0.20f, 1.f) }, // clay

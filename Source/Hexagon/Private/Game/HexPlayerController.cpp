@@ -47,6 +47,7 @@ void AHexPlayerController::BeginPlay()
 			HudWidget = CreateWidget<UHexHudUi>(this, HudWidgetClass);
 			HudWidget->AddToViewport();
 			HudWidget->SetVisibility(ESlateVisibility::Visible);
+			HudWidget->OnEndTurnPressed.AddDynamic(this, &AHexPlayerController::OnEndTurnPressed);
 		}
 	}
 
@@ -138,6 +139,17 @@ void AHexPlayerController::ActionEndTurn(const FInputActionValue& Value)
 	EndTurn();
 }
 
+void AHexPlayerController::OnEndTurnPressed()
+{
+	AHexTiles** HexTiles = AHexGridGen->SpawnedHexTiles.Find(SendCurrentHoverSelection.ClosestIndex);
+	if(!HexTiles || !*HexTiles)
+	{
+		return;
+	}
+
+	EndTurn();
+}
+
 void AHexPlayerController::EndTurn()
 {
 	Server_EndTurn(SendCurrentHoverSelection);
@@ -159,11 +171,21 @@ void AHexPlayerController::OnLeftMouseClicked(const FInputActionValue& Value)
 
 	SendCurrentHoverSelection = AHexGridGen->SendCurrentHoverSelection();
 
+	AHexTiles** HexTiles = AHexGridGen->SpawnedHexTiles.Find(SendCurrentHoverSelection.ClosestIndex);
+	if(!HexTiles || !*HexTiles)
+	{
+		return;
+	}
+
 	if(!HudWidget || !HudWidget->CurrentSelectedTile) return;
 	const FString ValueAsString = UEnum::GetValueAsString(SendCurrentHoverSelection.SnapType);
 	const FText TileText = FText::FromString(ValueAsString + SendCurrentHoverSelection.ClosestIndex.ToString());
 
 	HudWidget->CurrentSelectedTile->SetTexts(FText::FromString("Selected Tile"), TileText);
+
+	if(SelectedTile) SelectedTile->OnUnSelected();
+	SelectedTile = *HexTiles;
+	if(SelectedTile) SelectedTile->OnSelected();
 }
 
 void AHexPlayerController::Server_EndTurn_Implementation(const FHexHitResult& InSelection)
