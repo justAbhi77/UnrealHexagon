@@ -93,7 +93,11 @@ void AHexPlayerController::UpdateHoverWidget() const
 
 	const AHexTiles* HexTile = *HexTiles;
 	const FString ValueAsString = UEnum::GetValueAsString(HexTile->TileType);
-	const FText TileType = FText::FromString(ValueAsString + HexTile->TileCoordinates.ToString());
+	FString LeftString;
+	FString RightString;
+	ValueAsString.Split(TEXT("::"), &LeftString, &RightString);
+
+	const FText TileType = FText::FromString(RightString + HexTile->TileCoordinates.ToString());
 	HoverWidget->TileType->SetTexts(HoverWidget->TileType->HeadingText, TileType);
 	HoverWidget->DiceNumber->SetTexts(HoverWidget->DiceNumber->HeadingText, FText::AsNumber(HexTile->DiceNumber));
 	HoverWidget->Owner->SetTexts(HoverWidget->Owner->HeadingText, FText::FromString("--"));
@@ -179,7 +183,10 @@ void AHexPlayerController::OnLeftMouseClicked(const FInputActionValue& Value)
 
 	if(!HudWidget || !HudWidget->CurrentSelectedTile) return;
 	const FString ValueAsString = UEnum::GetValueAsString(SendCurrentHoverSelection.SnapType);
-	const FText TileText = FText::FromString(ValueAsString + SendCurrentHoverSelection.ClosestIndex.ToString());
+	FString LeftString;
+	FString RightString;
+	ValueAsString.Split(TEXT("::"), &LeftString, &RightString);
+	const FText TileText = FText::FromString(RightString + SendCurrentHoverSelection.ClosestIndex.ToString());
 
 	HudWidget->CurrentSelectedTile->SetTexts(FText::FromString("Selected Tile"), TileText);
 

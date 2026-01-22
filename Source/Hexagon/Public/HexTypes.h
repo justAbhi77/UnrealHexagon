@@ -8,25 +8,25 @@ class AHexTiles;
 UENUM(BlueprintType)
 enum class EHexSnapType : uint8
 {
-	None,
-	Tile,
-	Edge,
-	Vertex
+	None UMETA(DisplayName = "None"),
+	Tile UMETA(DisplayName = "Tile"),
+	Edge UMETA(DisplayName = "Edge"),
+	Vertex UMETA(DisplayName = "Vertex")
 };
 
 UENUM(BlueprintType)
 enum class EHexTileType : uint8
 {
-	None,
-	Desert,
-	Brick,
-	Forest,
-	Mountain,
-	Farm,
-	Grassland,
-	Water,
-	Settlement,
-	Road
+	None UMETA(DisplayName = "None"),
+	Desert UMETA(DisplayName = "Desert"),
+	Brick UMETA(DisplayName = "Brick"),
+	Forest UMETA(DisplayName = "Forest"),
+	Mountain UMETA(DisplayName = "Mountain"),
+	Farm UMETA(DisplayName = "Farm"),
+	Grassland UMETA(DisplayName = "Grassland"),
+	Water UMETA(DisplayName = "Water"),
+	Settlement UMETA(DisplayName = "Settlement"),
+	Road UMETA(DisplayName = "Road")
 };
 
 USTRUCT(BlueprintType)
@@ -58,13 +58,13 @@ struct FHexMouseOverInfo
 UENUM(BlueprintType)
 enum class EHexTurnPhase : uint8
 {
-	Setup,
-	Main,
+	Setup UMETA(DisplayName = "Setup"),
+	Main UMETA(DisplayName = "Main"),
 };
 
 UENUM(BlueprintType)
 enum class EHexSetupRound : uint8
 {
-	First,
-	Second
+	First UMETA(DisplayName = "First"),
+	Second UMETA(DisplayName = "Second")
 };
