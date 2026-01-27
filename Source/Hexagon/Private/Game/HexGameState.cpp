@@ -4,6 +4,7 @@
 #include "Game/HexGameState.h"
 #include "Game/HexPlayerController.h"
 #include "Game/HexPlayerState.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "Net/UnrealNetwork.h"
 
 AHexGameState::AHexGameState()
@@ -21,9 +22,13 @@ void AHexGameState::RegisterPlayer(AHexPlayerState* PlayerState)
 
 	PlayerState->PlayerIndex = TurnOrder.Num();
 	TurnOrder.Add(PlayerState);
+	OnRep_TurnOrder();
 
 	if(TurnOrder.Num() == 1)
+	{
 		PlayerState->bIsActiveTurn = true;
+		PlayerState->OnRep_IsActiveTurn();
+	}
 }
 
 void AHexGameState::AdvanceTurn()
@@ -38,17 +43,21 @@ void AHexGameState::AdvanceTurn()
 
 	if(CurrentTurnIndex >= TurnOrder.Num() || CurrentTurnIndex < 0)
 	{
-		if(SetupRound == EHexSetupRound::First)
+		if(TurnPhase == EHexTurnPhase::Setup && SetupRound == EHexSetupRound::First)
 		{
 			SetupRound = EHexSetupRound::Second;
+
 			bReverseTurnOrder = true;
 			CurrentTurnIndex = TurnOrder.Num() - 1;
+			OnRep_SetupRound();
 		}
-		else if(SetupRound == EHexSetupRound::Second)
+		else if(TurnPhase == EHexTurnPhase::Setup && SetupRound == EHexSetupRound::Second)
 		{
 			TurnPhase = EHexTurnPhase::Main;
+
 			bReverseTurnOrder = false;
 			CurrentTurnIndex = 0;
+			OnRep_TurnPhase();
 		}
 		else
 		{
@@ -58,6 +67,8 @@ void AHexGameState::AdvanceTurn()
 
 	TurnOrder[CurrentTurnIndex]->bIsActiveTurn = true;
 	TurnOrder[CurrentTurnIndex]->OnRep_IsActiveTurn();
+
+	OnRep_CurrentTurnIndex();
 }
 
 AHexPlayerState* AHexGameState::GetActivePlayer() const
@@ -67,12 +78,26 @@ AHexPlayerState* AHexGameState::GetActivePlayer() const
 	return nullptr;
 }
 
+void AHexGameState::OnRep_TurnPhase()
+{
+	UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("Phase Changed TurnPhase")));
+	OnPhaseChanged.Broadcast();
+}
+
+void AHexGameState::OnRep_SetupRound()
+{
+	UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("Phase Changed Setup Round")));
+	OnPhaseChanged.Broadcast();
+}
+
 void AHexGameState::OnRep_CurrentTurnIndex()
 {
+	OnTurnIndexChanged.Broadcast();
 }
 
 void AHexGameState::OnRep_TurnOrder()
 {
+	OnTurnIndexChanged.Broadcast();
 }
 
 void AHexGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

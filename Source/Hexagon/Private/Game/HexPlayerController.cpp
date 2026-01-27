@@ -25,16 +25,16 @@ void AHexPlayerController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (const ULocalPlayer* LocalPlayer = GetLocalPlayer())
-	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
-		{
-			Subsystem->AddMappingContext(InputMappingContext, 0);
-		}
-	}
-
 	if(IsLocalController())
 	{
+		if (const ULocalPlayer* LocalPlayer = GetLocalPlayer())
+		{
+			if (UEnhancedInputLocalPlayerSubsystem* Subsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
+			{
+				Subsystem->AddMappingContext(InputMappingContext, 0);
+			}
+		}
+
 		if(HoverWidgetClass)
 		{
 			HoverWidget = CreateWidget<UHexHoverUi>(this, HoverWidgetClass);
@@ -48,6 +48,16 @@ void AHexPlayerController::BeginPlay()
 			HudWidget->AddToViewport();
 			HudWidget->SetVisibility(ESlateVisibility::Visible);
 			HudWidget->OnEndTurnPressed.AddDynamic(this, &AHexPlayerController::OnEndTurnPressed);
+		}
+
+		HexGameState = Cast<AHexGameState>(UGameplayStatics::GetGameState(GetWorld()));
+		if (HexGameState)
+		{
+			HexGameState->OnTurnIndexChanged.AddUniqueDynamic(this, &AHexPlayerController::OnTurnIndexChanged);
+			OnTurnIndexChanged();
+
+			HexGameState->OnPhaseChanged.AddUniqueDynamic(this, &AHexPlayerController::OnPhaseChanged);
+			OnPhaseChanged();
 		}
 	}
 
@@ -145,13 +155,44 @@ void AHexPlayerController::ActionEndTurn(const FInputActionValue& Value)
 
 void AHexPlayerController::OnEndTurnPressed()
 {
-	AHexTiles** HexTiles = AHexGridGen->SpawnedHexTiles.Find(SendCurrentHoverSelection.ClosestIndex);
-	if(!HexTiles || !*HexTiles)
+	if(AHexTiles** HexTiles = AHexGridGen->SpawnedHexTiles.Find(SendCurrentHoverSelection.ClosestIndex); !HexTiles || !*HexTiles)
 	{
 		return;
 	}
 
 	EndTurn();
+}
+
+void AHexPlayerController::OnTurnIndexChanged()
+{
+	if(!HudWidget) return;
+
+	const FString TurnOrder = GetTurnOrderString(HexGameState->TurnOrder, HexGameState->CurrentTurnIndex, GetPlayerState<AHexPlayerState>());
+
+	HudWidget->TurnText->SetTexts(HudWidget->TurnText->HeadingText, FText::FromString(TurnOrder));
+}
+
+void AHexPlayerController::OnPhaseChanged()
+{
+	FString Phase = "";
+
+	const FString ValueAsString = UEnum::GetValueAsString(HexGameState->TurnPhase);
+	FString TurnPhaseLeftString;
+	ValueAsString.Split(TEXT("::"), &TurnPhaseLeftString, &Phase);
+
+	if(HexGameState->TurnPhase == EHexTurnPhase::Setup)
+	{
+		const FString SetupValueAsString = UEnum::GetValueAsString(HexGameState->SetupRound);
+		FString SetupLeftString;
+		FString SetupRightString;
+		SetupValueAsString.Split(TEXT("::"), &SetupLeftString, &SetupRightString);
+		Phase += " " + SetupRightString;
+	}
+
+	UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("Phase Changed %hs %s"), HudWidget ? "True" : "False", *Phase));
+
+	if(!HudWidget) return;
+	HudWidget->TurnPhase->SetTexts(HudWidget->TurnPhase->HeadingText, FText::FromString(Phase));
 }
 
 void AHexPlayerController::EndTurn()
@@ -210,4 +251,38 @@ void AHexPlayerController::Server_EndTurn_Implementation(const FHexHitResult& In
 
 	UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("turn change: %s"), *Output));
 	GS->AdvanceTurn();
+}
+
+FString AHexPlayerController::GetTurnOrderString(const TArray<AHexPlayerState*>& TurnOrder, const int32 CurrentTurnIndex, const AHexPlayerState* LocalPlayerState)
+{
+	if(TurnOrder.Num() == 0 || !TurnOrder.IsValidIndex(CurrentTurnIndex)) return TEXT("");
+
+	TArray<FString> PlayerNames;
+	PlayerNames.Reserve(TurnOrder.Num());
+
+	for (int32 Offset = 0; Offset < TurnOrder.Num(); ++Offset)
+	{
+		const int32 Index = (CurrentTurnIndex + Offset) % TurnOrder.Num();
+
+		if (const AHexPlayerState* HexPlayerState = TurnOrder[Index])
+		{
+			FString Name = HexPlayerState->GetPlayerName();
+
+			// Current turn player (first after rotation)
+			if (Offset == 0)
+			{
+				Name += TEXT(" *");
+			}
+
+			// Local player
+			if (HexPlayerState == LocalPlayerState)
+			{
+				Name += TEXT(" (YOU)");
+			}
+
+			PlayerNames.Add(Name);
+		}
+	}
+
+	return FString::Join(PlayerNames, TEXT(" -> "));
 }

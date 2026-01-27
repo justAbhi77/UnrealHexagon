@@ -7,6 +7,8 @@
 #include "GameFramework/PlayerController.h"
 #include "HexPlayerController.generated.h"
 
+class AHexPlayerState;
+class AHexGameState;
 class UHexHudUi;
 class UHexHoverUi;
 class AHexGridGenerator;
@@ -44,6 +46,14 @@ public:
 
 	UFUNCTION()
 	void OnEndTurnPressed();
+
+	UFUNCTION()
+	void OnTurnIndexChanged();
+
+	FString GetTurnOrderString(const TArray<AHexPlayerState*>& TurnOrder, const int32 CurrentTurnIndex, const AHexPlayerState* LocalPlayerState);
+
+	UFUNCTION()
+	void OnPhaseChanged();
 protected:
 	virtual void BeginPlay() override;
 
@@ -74,4 +84,7 @@ protected:
 
 	UPROPERTY()
 	AHexTiles* SelectedTile;
+
+	UPROPERTY()
+	AHexGameState* HexGameState;
 };

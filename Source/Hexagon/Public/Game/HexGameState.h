@@ -7,7 +7,11 @@
 #include "GameFramework/GameState.h"
 #include "HexGameState.generated.h"
 
+class AHexPlayerController;
 class AHexPlayerState;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnTurnIndexChanged);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnPhaseChanged);
 
 /**
  *
@@ -25,7 +29,7 @@ public:
 	UPROPERTY(ReplicatedUsing=OnRep_CurrentTurnIndex, VisibleAnywhere, Category="Turn")
 	int32 CurrentTurnIndex;
 
-	UPROPERTY(Replicated, VisibleAnywhere, Category="Turn")
+	UPROPERTY(ReplicatedUsing=OnRep_TurnPhase, VisibleAnywhere, Category="Turn")
 	EHexTurnPhase TurnPhase;
 
 	UPROPERTY(ReplicatedUsing=OnRep_TurnOrder)
@@ -43,9 +47,21 @@ public:
 
 	AHexPlayerState* GetActivePlayer() const;
 
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing=OnRep_SetupRound, VisibleAnywhere, Category="Turn")
 	EHexSetupRound SetupRound;
 
 	UPROPERTY(Replicated)
 	bool bReverseTurnOrder;
+
+	UPROPERTY(BlueprintAssignable)
+	FOnTurnIndexChanged OnTurnIndexChanged;
+
+	UFUNCTION()
+	void OnRep_TurnPhase();
+
+	UFUNCTION()
+	void OnRep_SetupRound();
+
+	UPROPERTY(BlueprintAssignable)
+	FOnPhaseChanged OnPhaseChanged;
 };
