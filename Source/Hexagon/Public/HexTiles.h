@@ -46,6 +46,9 @@ public:
 	void OnTileUnSelected();
 
 	void OnUnSelected();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, meta=(ExposeOnSpawn="true"))
+	int32 OwningPlayerIndex = -1;
 protected:
 	virtual void BeginPlay() override;
 

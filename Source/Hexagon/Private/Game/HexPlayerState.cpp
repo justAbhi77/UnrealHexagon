@@ -13,7 +13,7 @@ AHexPlayerState::AHexPlayerState()
 
 void AHexPlayerState::OnRep_IsActiveTurn()
 {
-
+	SetupTurnsTakenByActivePlayer = 0;
 }
 
 void AHexPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

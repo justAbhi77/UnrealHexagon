@@ -197,14 +197,16 @@ void AHexPlayerController::OnPhaseChanged()
 
 void AHexPlayerController::EndTurn()
 {
-	Server_EndTurn(SendCurrentHoverSelection);
-
 	AHexPlayerState* PS = GetPlayerState<AHexPlayerState>();
 	AHexGameState* GS = GetWorld()->GetGameState<AHexGameState>();
 
-	if(UHexMath::IsValidEndTurn(SendCurrentHoverSelection, GS, PS)) return;
+	if(!UHexMath::IsValidEndTurn(SendCurrentHoverSelection, GS, PS, AHexGridGen->SpawnedHexTiles))
+	{
+		// TODO: create a widget for error messages to player when end turn is pressed.
+		return;
+	}
 
-	// TODO: create a widget for error messages to player when end turn is pressed.
+	Server_EndTurn(SendCurrentHoverSelection);
 }
 
 void AHexPlayerController::OnLeftMouseClicked(const FInputActionValue& Value)
@@ -243,11 +245,14 @@ void AHexPlayerController::Server_EndTurn_Implementation(const FHexHitResult& In
 
 	const FString Output = UHexHelper::ExportStructToText(InSelection);
 
-	if(!UHexMath::IsValidEndTurn(InSelection, GS, PS))
+	if(!UHexMath::IsValidEndTurn(InSelection, GS, PS, AHexGridGen->SpawnedHexTiles))
 	{
 		UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("Not Valid turn change by: %s with data: %s"), *PS->GetPlayerName(), *Output));
 		return;
 	}
+
+	AHexTiles* HexTile = AHexGridGen->SpawnedHexTiles[InSelection.ClosestIndex];
+	HexTile->OwningPlayerIndex = PS->PlayerIndex;
 
 	UKismetSystemLibrary::PrintString(this, FString::Printf(TEXT("turn change: %s"), *Output));
 	GS->AdvanceTurn();
@@ -260,16 +265,14 @@ FString AHexPlayerController::GetTurnOrderString(const TArray<AHexPlayerState*>&
 	TArray<FString> PlayerNames;
 	PlayerNames.Reserve(TurnOrder.Num());
 
-	for (int32 Offset = 0; Offset < TurnOrder.Num(); ++Offset)
+	for (int32 Index = 0; Index < TurnOrder.Num(); ++Index)
 	{
-		const int32 Index = (CurrentTurnIndex + Offset) % TurnOrder.Num();
-
 		if (const AHexPlayerState* HexPlayerState = TurnOrder[Index])
 		{
 			FString Name = HexPlayerState->GetPlayerName();
 
-			// Current turn player (first after rotation)
-			if (Offset == 0)
+			// Current turn player
+			if (Index == CurrentTurnIndex)
 			{
 				Name += TEXT(" *");
 			}

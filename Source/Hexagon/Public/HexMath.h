@@ -33,6 +33,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	static FVector SnapVectorToVector(const FVector& VectorToSnap, const FVector& GridVector);
 
+	UFUNCTION(BlueprintCallable)
+	static bool TraceMouseToGrid(const APlayerController* PlayerController, const FVector& GridCenterLocation, FVector& OutIntersection);
+
 	// Returns hexagon vertices
 	UFUNCTION(BlueprintCallable)
 	static void GetHexagonVertices(const FIntPoint& HexagonCenter, TArray<FIntPoint>& OutVertices);
@@ -48,6 +51,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	static void GetVertexEdges(const FIntPoint& Vertex, TArray<FIntPoint>& OutEdges);
+
+	UFUNCTION(BlueprintCallable)
+	static void GetVertexVertices(const FIntPoint& Vertex, TArray<FIntPoint>& OutVertices);
 
 	UFUNCTION(BlueprintCallable)
 	static void GetEdgeHexagons(const FIntPoint& Edge, TArray<FIntPoint>& OutHexagons);
@@ -78,8 +84,11 @@ public:
 	static void ForEachValidHexRow(int32 Column, FIntPoint GridSize, const TFunctionRef<void(int32 Row)>& Func);
 
 	UFUNCTION(BlueprintCallable)
-	static bool IsValidEndTurn(const FHexHitResult& InSelection, AHexGameState* HexGs, AHexPlayerState* HexPs);
+	static bool IsValidEndTurn(const FHexHitResult& InSelection, AHexGameState* HexGs, AHexPlayerState* HexPs, const TMap<FIntPoint, AHexTiles*>& SpawnedHexTiles);
 
 	UFUNCTION(BlueprintCallable)
-	static bool TraceMouseToGrid(const APlayerController* PlayerController, const FVector& GridCenterLocation, FVector& OutIntersection);
+	static bool IsValidSetupFirstTurn1(const FHexHitResult& InSelection, const AHexTiles* HexTile, const TMap<FIntPoint, AHexTiles*>& SpawnedHexTiles);
+
+	UFUNCTION(BlueprintCallable)
+	static bool IsValidSetupFirstTurn2(const FHexHitResult& InSelection, const AHexTiles* HexTile, const TMap<FIntPoint, AHexTiles*>& SpawnedHexTiles);
 };

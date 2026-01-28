@@ -6,6 +6,7 @@
 #include "HexTypes.h"
 #include "HexBoardConfig.h"
 #include "Game/HexGameState.h"
+#include "Game/HexPlayerState.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 
@@ -26,6 +27,29 @@ FVector UHexMath::SnapVectorToVector(const FVector& VectorToSnap, const FVector&
 	const float ResultZ = FMath::GridSnap(VectorToSnap.Z, GridVector.Z);
 
 	return FVector(ResultX, ResultY, ResultZ);
+}
+
+
+bool UHexMath::TraceMouseToGrid(const APlayerController* PlayerController, const FVector& GridCenterLocation, FVector& OutIntersection)
+{
+	if (!PlayerController)
+		return false;
+
+	FVector WorldLocation;
+	FVector WorldDirection;
+
+	if (!PlayerController->DeprojectMousePositionToWorld(WorldLocation, WorldDirection))
+		return false;
+
+	const FVector TraceEnd = WorldLocation + WorldDirection * 100000.f;
+
+	// Grid plane (XY plane at grid center Z)
+	const FPlane GridPlane = UKismetMathLibrary::MakePlaneFromPointAndNormal(GridCenterLocation, FVector::UpVector);
+
+	if (float T; !UKismetMathLibrary::LinePlaneIntersection(WorldLocation, TraceEnd, GridPlane, T, OutIntersection))
+		return false;
+
+	return true;
 }
 
 void UHexMath::GetHexagonVertices(const FIntPoint& HexagonCenter, TArray<FIntPoint>& OutVertices)
@@ -94,6 +118,18 @@ void UHexMath::GetVertexEdges(const FIntPoint& Vertex, TArray<FIntPoint>& OutEdg
 	OutEdges[3] = Vertex + FIntPoint(-2, 0);
 	OutEdges[4] = Vertex + FIntPoint( 1, 3);
 	OutEdges[5] = Vertex + FIntPoint( 1,  -3);
+}
+
+void UHexMath::GetVertexVertices(const FIntPoint& Vertex, TArray<FIntPoint>& OutVertices)
+{
+	OutVertices.Reset(6);
+	OutVertices.AddUninitialized(6);
+	OutVertices[0] = Vertex + FIntPoint(4, 0.f);
+	OutVertices[1] = Vertex + FIntPoint(-2, 6.f);
+	OutVertices[2] = Vertex + FIntPoint(-2, -6.f);
+	OutVertices[3] = Vertex + FIntPoint(-4, 0.f);
+	OutVertices[4] = Vertex + FIntPoint(2, -6.f);
+	OutVertices[5] = Vertex + FIntPoint(2, 6.f);
 }
 
 void UHexMath::GetEdgeHexagons(const FIntPoint& Edge, TArray<FIntPoint>& OutHexagons)
@@ -320,11 +356,14 @@ void UHexMath::SpawnVerticesAndEdges(UWorld* World, AHexTiles* ParentTile, const
 	}
 }
 
-bool UHexMath::IsValidEndTurn(const FHexHitResult& InSelection, AHexGameState* HexGs, AHexPlayerState* HexPs)
+bool UHexMath::IsValidEndTurn(const FHexHitResult& InSelection, AHexGameState* HexGs, AHexPlayerState* HexPs, const TMap<FIntPoint, AHexTiles*>& SpawnedHexTiles)
 {
 	if(!HexPs || !HexGs) return false;
 
 	if(HexGs->GetActivePlayer() != HexPs) return false;
+
+	const AHexTiles* HexTile = SpawnedHexTiles.FindRef(InSelection.ClosestIndex);
+	if(!HexTile) return false;
 
 	switch(HexGs->TurnPhase)
 	{
@@ -332,8 +371,9 @@ bool UHexMath::IsValidEndTurn(const FHexHitResult& InSelection, AHexGameState* H
 		switch(HexGs->SetupRound)
 		{
 		case EHexSetupRound::First:
-			if(InSelection.SnapType == EHexSnapType::Vertex)
-				return true;
+			if(HexPs->SetupTurnsTakenByActivePlayer == 0)
+				return IsValidSetupFirstTurn1(InSelection, HexTile, SpawnedHexTiles);
+			return IsValidSetupFirstTurn2(InSelection, HexTile, SpawnedHexTiles);
 		case EHexSetupRound::Second:
 			if(InSelection.SnapType == EHexSnapType::Edge)
 				return true;
@@ -346,24 +386,41 @@ bool UHexMath::IsValidEndTurn(const FHexHitResult& InSelection, AHexGameState* H
 	return false;
 }
 
-bool UHexMath::TraceMouseToGrid(const APlayerController* PlayerController, const FVector& GridCenterLocation, FVector& OutIntersection)
+bool UHexMath::IsValidSetupFirstTurn1(const FHexHitResult& InSelection, const AHexTiles* HexTile, const TMap<FIntPoint, AHexTiles*>& SpawnedHexTiles)
 {
-	if (!PlayerController)
-		return false;
+	if(HexTile->OwningPlayerIndex == -1)
+		if(InSelection.SnapType == EHexSnapType::Vertex)
+		{
+			TArray<FIntPoint> OutVertices;
+			GetVertexVertices(InSelection.ClosestIndex, OutVertices);
+			for(const auto& Vertex : OutVertices)
+			{
+				if(const AHexTiles* HexTileNeighbour = SpawnedHexTiles.FindRef(Vertex))
+				{
+					if(HexTileNeighbour->OwningPlayerIndex != -1)
+						return false;
+				}
+			}
+			return true;
+		}
 
-	FVector WorldLocation;
-	FVector WorldDirection;
+	return false;
+}
 
-	if (!PlayerController->DeprojectMousePositionToWorld(WorldLocation, WorldDirection))
-		return false;
+bool UHexMath::IsValidSetupFirstTurn2(const FHexHitResult& InSelection, const AHexTiles* HexTile,const TMap<FIntPoint, AHexTiles*>& SpawnedHexTiles)
+{
+	if(HexTile->OwningPlayerIndex == -1)
+		if(InSelection.SnapType == EHexSnapType::Edge)
+		{
+			TArray<FIntPoint> OutVertices;
+			GetEdgeVertices(InSelection.ClosestIndex, OutVertices);
+			for(const auto& Vertex : OutVertices)
+			{
+				if(const AHexTiles* HexTileNeighbour = SpawnedHexTiles.FindRef(Vertex))
+					if(HexTileNeighbour->OwningPlayerIndex == HexTile->OwningPlayerIndex)
+						return true;
+			}
+		}
 
-	const FVector TraceEnd = WorldLocation + WorldDirection * 100000.f;
-
-	// Grid plane (XY plane at grid center Z)
-	const FPlane GridPlane = UKismetMathLibrary::MakePlaneFromPointAndNormal(GridCenterLocation, FVector::UpVector);
-
-	if (float T; !UKismetMathLibrary::LinePlaneIntersection(WorldLocation, TraceEnd, GridPlane, T, OutIntersection))
-		return false;
-
-	return true;
+	return false;
 }

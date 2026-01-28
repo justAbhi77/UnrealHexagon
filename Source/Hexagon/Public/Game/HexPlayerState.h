@@ -27,6 +27,9 @@ public:
 	UPROPERTY(ReplicatedUsing=OnRep_IsActiveTurn, VisibleAnywhere, Category="Turn")
 	bool bIsActiveTurn;
 
+	UPROPERTY(Replicated, VisibleAnywhere, Category="Turn")
+	int32 SetupTurnsTakenByActivePlayer;
+
 	UFUNCTION()
 	void OnRep_IsActiveTurn();
 };

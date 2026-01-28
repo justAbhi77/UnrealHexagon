@@ -33,41 +33,63 @@ void AHexGameState::RegisterPlayer(AHexPlayerState* PlayerState)
 
 void AHexGameState::AdvanceTurn()
 {
-	if(!HasAuthority() || TurnOrder.Num() == 0) return;
+	if (!HasAuthority() || TurnOrder.Num() == 0) return;
 
+	// ----- SETUP PHASE -----
+	if (TurnPhase == EHexTurnPhase::Setup)
+	{
+		TurnOrder[CurrentTurnIndex]->SetupTurnsTakenByActivePlayer++;
+
+		// Still the same player until they finish both setup turns
+		if (TurnOrder[CurrentTurnIndex]->SetupTurnsTakenByActivePlayer < 2)
+		{
+			return;
+		}
+
+		// End current player's turn
+		TurnOrder[CurrentTurnIndex]->bIsActiveTurn = false;
+		TurnOrder[CurrentTurnIndex]->OnRep_IsActiveTurn();
+
+		const int32 Direction = bReverseTurnOrder ? -1 : 1;
+		CurrentTurnIndex += Direction;
+
+		// Reached end of order
+		if (CurrentTurnIndex >= TurnOrder.Num() || CurrentTurnIndex < 0)
+		{
+			// First setup round → Second (reverse order)
+			if (SetupRound == EHexSetupRound::First)
+			{
+				SetupRound = EHexSetupRound::Second;
+				bReverseTurnOrder = true;
+				CurrentTurnIndex = TurnOrder.Num() - 1;
+				OnRep_SetupRound();
+			}
+			// Second setup round → Main game
+			else
+			{
+				TurnPhase = EHexTurnPhase::Main;
+				bReverseTurnOrder = false;
+				CurrentTurnIndex = 0;
+				OnRep_TurnPhase();
+			}
+		}
+
+		// Activate next player
+		TurnOrder[CurrentTurnIndex]->bIsActiveTurn = true;
+		TurnOrder[CurrentTurnIndex]->OnRep_IsActiveTurn();
+		OnRep_CurrentTurnIndex();
+
+		return;
+	}
+
+	// ----- MAIN GAME PHASE (normal single turn) -----
 	TurnOrder[CurrentTurnIndex]->bIsActiveTurn = false;
 	TurnOrder[CurrentTurnIndex]->OnRep_IsActiveTurn();
 
-	const int32 Direction = bReverseTurnOrder ? -1 : 1;
-	CurrentTurnIndex += Direction;
-
-	if(CurrentTurnIndex >= TurnOrder.Num() || CurrentTurnIndex < 0)
-	{
-		if(TurnPhase == EHexTurnPhase::Setup && SetupRound == EHexSetupRound::First)
-		{
-			SetupRound = EHexSetupRound::Second;
-
-			bReverseTurnOrder = true;
-			CurrentTurnIndex = TurnOrder.Num() - 1;
-			OnRep_SetupRound();
-		}
-		else if(TurnPhase == EHexTurnPhase::Setup && SetupRound == EHexSetupRound::Second)
-		{
-			TurnPhase = EHexTurnPhase::Main;
-
-			bReverseTurnOrder = false;
-			CurrentTurnIndex = 0;
-			OnRep_TurnPhase();
-		}
-		else
-		{
-			CurrentTurnIndex = (CurrentTurnIndex + TurnOrder.Num()) % TurnOrder.Num();
-		}
-	}
+	CurrentTurnIndex = (CurrentTurnIndex + 1) % TurnOrder.Num();
 
 	TurnOrder[CurrentTurnIndex]->bIsActiveTurn = true;
 	TurnOrder[CurrentTurnIndex]->OnRep_IsActiveTurn();
-
 	OnRep_CurrentTurnIndex();
 }
 
